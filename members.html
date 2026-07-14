@@ -131,6 +131,23 @@
   .step.current .lbl{color:var(--pine);font-weight:600}
   .step:last-child.current .lbl{color:var(--gold)}
 
+  /* 最近见面打卡 */
+  .meet-block{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .meet-title{font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .meet-title .cnt{letter-spacing:0;color:var(--pine);font-weight:600}
+  .meet-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .meet-chip{
+    background:var(--pine-soft);color:var(--pine);border-radius:99px;
+    padding:4px 10px;font-size:12px;display:flex;align-items:center;gap:5px;
+  }
+  .meet-chip button{background:none;border:none;color:var(--pine);opacity:.5;cursor:pointer;font-size:13px;padding:0}
+  .meet-chip button:hover{opacity:1}
+  .meet-add{display:flex;gap:6px;align-items:center}
+  .meet-add input[type=date]{
+    border:1px solid var(--line);border-radius:8px;padding:7px;font-size:13px;
+    font-family:inherit;background:#fff;color:var(--ink);
+  }
+
   .section{background:var(--card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--line);margin-bottom:12px}
   .sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
   .sec-title{font-size:14px;font-weight:600}
@@ -423,6 +440,7 @@ function migrate(){
       if(m.learning[k]===false) m.learning[k]=0;
     });
     if(m.followUpNote===undefined) m.followUpNote="";
+    if(!Array.isArray(m.meetings)) m.meetings=[];
     if(!Array.isArray(m.logs)) m.logs=[];
     m.logs.forEach(l=>{ if(l.plan===undefined) l.plan=""; });
     if(m.nextPlan){
@@ -548,6 +566,13 @@ function renderDetail(){
   // 状态下拉
   const statusOpts = STATUSES.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("");
 
+  // 最近见面打卡
+  const meetSorted = m.meetings.slice().sort((a,b)=>b.localeCompare(a));
+  const meetChips = meetSorted.slice(0,10).map(d=>
+    `<span class="meet-chip">${fmtDate(d)}<button onclick="delMeeting('${m.id}','${d}')" title="删除">×</button></span>`
+  ).join("") + (meetSorted.length>10?`<span class="meet-chip" style="opacity:.6">…共${meetSorted.length}次</span>`:"");
+  const monthCnt = m.meetings.filter(d=>d.slice(0,7)===today().slice(0,7)).length;
+
   // 产品 + 每个产品的改善记录
   const prodBlocks = m.products.map((p,pi)=>{
     const improves = p.improvements.map((im,ii)=>
@@ -620,10 +645,18 @@ function renderDetail(){
         <div class="path-title">成 长 路 径(点圆点更改阶段)</div>
         <div class="steps">${steps}</div>
       </div>
+      <div class="meet-block">
+        <div class="meet-title"><span>最 近 见 面</span><span class="cnt">${monthCnt?`本月 ${monthCnt} 次`:""}</span></div>
+        ${meetChips?`<div class="meet-chips">${meetChips}</div>`:""}
+        <div class="meet-add">
+          <input type="date" id="meetDate" value="${today()}">
+          <button class="btn btn-primary btn-small" onclick="addMeeting('${m.id}')">打卡</button>
+        </div>
+      </div>
     </div>
 
     <div class="section">
-      <div class="sec-head"><div class="sec-title">最近日期</div>
+      <div class="sec-head"><div class="sec-title">下次见面</div>
         ${isOverdue(m.nextFollowUp)?'<span style="color:var(--rose);font-size:13px">● 到期了</span>':''}
       </div>
       <div class="followup-row">
@@ -687,6 +720,20 @@ function setLearnLevel(id,key,lv){
   saveData(); renderDetail();
 }
 function setFollowNote(id,v){ getMember(id).followUpNote=v.trim(); saveData(); }
+function addMeeting(id){
+  const d=$("#meetDate").value||today();
+  const m=getMember(id);
+  if(m.meetings.includes(d)){ showToast(fmtDate(d)+" 已经打过卡"); return; }
+  m.meetings.push(d);
+  saveData(); renderDetail(); showToast("已记录见面 "+fmtDate(d));
+}
+function delMeeting(id,d){
+  showConfirm(`删除 ${fmtDate(d)} 的见面记录?`, ()=>{
+    const m=getMember(id);
+    m.meetings=m.meetings.filter(x=>x!==d);
+    saveData(); renderDetail();
+  });
+}
 function addProduct(id){
   const name=$("#prodSel").value, date=$("#prodDate").value;
   const m=getMember(id);
