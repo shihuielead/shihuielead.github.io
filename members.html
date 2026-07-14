@@ -518,14 +518,25 @@ function renderList(){
       `<i class="${i<=m.stage?'on':''} ${i===PATH_STAGES.length-1?'last':''}"></i>`).join("");
     const due = isOverdue(m.nextFollowUp)
       ? `<span class="due">● 该跟进了 (${fmtDate(m.nextFollowUp)})</span>`
-      : (m.nextFollowUp?`<span>下次跟进 ${fmtDate(m.nextFollowUp)}</span>`:"");
+      : (m.nextFollowUp?`<span>下次见面 ${fmtDate(m.nextFollowUp)}</span>`:"");
+    // 距上次见面
+    let meetInfo="";
+    if(Array.isArray(m.meetings) && m.meetings.length){
+      const last = m.meetings.slice().sort().pop();
+      const days = Math.round((new Date(today()) - new Date(last))/86400000);
+      if(days<=0) meetInfo = `<span style="color:var(--pine);font-weight:500">今天见过面</span>`;
+      else if(days>30) meetInfo = `<span style="color:var(--warn);font-weight:500">距上次见面 ${days} 天</span>`;
+      else meetInfo = `<span>距上次见面 ${days} 天</span>`;
+    }else{
+      meetInfo = `<span>还没见面记录</span>`;
+    }
     const prods = m.products.length?`<span>${m.products.map(p=>p.name).join("、")}</span>`:"";
     return `<div class="member-card" onclick="openMember('${m.id}')">
       <div class="mc-top">
         <div class="mc-name">${esc(m.name)}</div>
         <div class="status-badge st-${m.status}">${m.status}</div>
       </div>
-      <div class="mc-meta">${due}${prods}</div>
+      <div class="mc-meta">${meetInfo}${due}${prods}</div>
       <div class="mini-path">${pathBars}</div>
     </div>`;
   }).join("");
