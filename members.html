@@ -152,7 +152,23 @@
   .sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
   .sec-title{font-size:14px;font-weight:600}
 
-  /* products */
+  /* 产品流水记录 */
+  .pchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .pchip{
+    border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;
+    background:#fff;color:var(--muted);cursor:pointer;font-family:inherit;
+  }
+  .pchip.on{background:var(--pine);color:#fff;border-color:var(--pine)}
+  .plog-item{padding:10px 0;border-bottom:1px dashed var(--line)}
+  .plog-item:last-child{border-bottom:none}
+  .plog-top{display:flex;gap:10px;align-items:baseline}
+  .plog-date{color:var(--pine);font-weight:600;font-size:12px;white-space:nowrap}
+  .plog-prods{font-size:14px;flex:1;line-height:1.6}
+  .plog-del{background:none;border:none;color:var(--line);cursor:pointer;font-size:14px;padding:0}
+  .plog-del:hover{color:#B04040}
+  .plog-note{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.6}
+
+  /* products (旧样式保留) */
   .prod-block{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
   .prod-head{
     display:flex;justify-content:space-between;align-items:center;
@@ -434,6 +450,17 @@ function migrate(){
       if(RENAME[p.name]) p.name=RENAME[p.name];
       if(!Array.isArray(p.improvements)) p.improvements=[];
     });
+    // 旧的"一产品一记录"结构转换为流水记录
+    if(!Array.isArray(m.productLogs)){
+      m.productLogs=[];
+      m.products.forEach(p=>{
+        m.productLogs.push({id:uid(),date:p.date||today(),products:[p.name],note:"开始使用"});
+        p.improvements.forEach(im=>{
+          m.productLogs.push({id:uid(),date:im.date||today(),products:[p.name],note:im.text||""});
+        });
+      });
+      m.products=[];
+    }
     if(!m.learning) m.learning={};
     Object.keys(m.learning).forEach(k=>{
       if(m.learning[k]===true) m.learning[k]=1;
@@ -530,7 +557,8 @@ function renderList(){
     }else{
       meetInfo = `<span>还没见面记录</span>`;
     }
-    const prods = m.products.length?`<span>${m.products.map(p=>p.name).join("、")}</span>`:"";
+    const pnames=[...new Set((m.productLogs||[]).flatMap(l=>l.products))];
+    const prods = pnames.length?`<span>${pnames.map(esc).join("、")}</span>`:"";
     return `<div class="member-card" onclick="openMember('${m.id}')">
       <div class="mc-top">
         <div class="mc-name">${esc(m.name)}</div>
@@ -584,28 +612,19 @@ function renderDetail(){
   ).join("") + (meetSorted.length>10?`<span class="meet-chip" style="opacity:.6">…共${meetSorted.length}次</span>`:"");
   const monthCnt = m.meetings.filter(d=>d.slice(0,7)===today().slice(0,7)).length;
 
-  // 产品 + 每个产品的改善记录
-  const prodBlocks = m.products.map((p,pi)=>{
-    const improves = p.improvements.map((im,ii)=>
-      `<div class="improve-item">
-        <span class="idate">${fmtDate(im.date)}</span>
-        <span>${esc(im.text)}</span>
-        <button class="idel" onclick="delImprove('${m.id}',${pi},${ii})">删除</button>
-      </div>`).join("");
-    return `<div class="prod-block">
-      <div class="prod-head">
-        <span>${esc(p.name)}</span>
-        <span class="d">开始:${fmtDate(p.date)}<button class="rm" onclick="removeProduct('${m.id}',${pi})" title="移除产品">×</button></span>
+  // 产品流水:选产品chips + 记录列表
+  const prodChips = PRODUCTS.map(p=>
+    `<button class="pchip" onclick="this.classList.toggle('on')" data-p="${esc(p)}">${esc(p)}</button>`).join("");
+  const plogSorted = (m.productLogs||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const plogList = plogSorted.map(l=>
+    `<div class="plog-item">
+      <div class="plog-top">
+        <span class="plog-date">${fmtDate(l.date)}</span>
+        <span class="plog-prods">${l.products.map(esc).join(" · ")}</span>
+        <button class="plog-del" onclick="delProductLog('${m.id}','${l.id}')" title="删除">×</button>
       </div>
-      ${improves?`<div class="improve-list">${improves}</div>`:""}
-      <div class="improve-add">
-        <input type="date" id="impDate${pi}" value="${today()}">
-        <input type="text" id="impText${pi}" placeholder="有什么改善?如:排便顺了、睡眠变好">
-        <button class="btn btn-primary btn-small" onclick="addImprove('${m.id}',${pi})">＋</button>
-      </div>
-    </div>`;
-  }).join("") || `<div class="check-note">还没记录,在下面选产品和开始日期</div>`;
-  const prodOptions = PRODUCTS.map(p=>`<option>${p}</option>`).join("");
+      ${l.note?`<div class="plog-note">${esc(l.note)}</div>`:""}
+    </div>`).join("") || `<div class="check-note">还没有记录:上面选产品(可多选)、填日期和备注,点加入</div>`;
 
   // 分享过: 每项三级进度
   const LEVELS = ["知道","理解","应用"];
@@ -678,12 +697,13 @@ function renderDetail(){
 
     <div class="section">
       <div class="sec-head"><div class="sec-title">目前吃的产品</div></div>
-      ${prodBlocks}
-      <div class="prod-add">
-        <select id="prodSel">${prodOptions}</select>
-        <input type="date" id="prodDate" value="${today()}">
-        <button class="btn btn-primary btn-small" onclick="addProduct('${m.id}')">加入</button>
+      <div class="pchips">${prodChips}</div>
+      <div class="followup-row" style="margin-bottom:12px">
+        <input type="date" id="plogDate" value="${today()}">
+        <input type="text" class="fu-note" id="plogNote" placeholder="备注:有什么改善、反应…">
+        <button class="btn btn-primary btn-small" onclick="addProductLog('${m.id}')">加入</button>
       </div>
+      ${plogList}
     </div>
 
     <div class="section">
@@ -745,31 +765,19 @@ function delMeeting(id,d){
     saveData(); renderDetail();
   });
 }
-function addProduct(id){
-  const name=$("#prodSel").value, date=$("#prodDate").value;
+function addProductLog(id){
+  const sel=[...document.querySelectorAll(".pchip.on")].map(el=>el.dataset.p);
+  if(!sel.length){ showToast("先选至少一个产品"); return; }
+  const date=$("#plogDate").value||today();
+  const note=$("#plogNote").value.trim();
   const m=getMember(id);
-  if(m.products.some(p=>p.name===name)){ showToast(name+" 已在清单里"); return; }
-  m.products.push({name,date,improvements:[]}); saveData(); renderDetail();
+  m.productLogs.push({id:uid(),date,products:sel,note});
+  saveData(); renderDetail(); showToast("已记录");
 }
-function removeProduct(id,i){
-  event.stopPropagation();
-  const m=getMember(id);
-  const doRemove=()=>{ m.products.splice(i,1); saveData(); renderDetail(); };
-  if(m.products[i].improvements.length){
-    showConfirm(`移除「${esc(m.products[i].name)}」会连同它的改善记录一起删除,确定?`, doRemove);
-  }else{
-    doRemove();
-  }
-}
-function addImprove(id,pi){
-  const date=$("#impDate"+pi).value, text=$("#impText"+pi).value.trim();
-  if(!text){ showToast("先写改善内容"); return; }
-  getMember(id).products[pi].improvements.push({date,text});
-  saveData(); renderDetail(); showToast("已记录改善");
-}
-function delImprove(id,pi,ii){
-  showConfirm("删除这条改善记录?", ()=>{
-    getMember(id).products[pi].improvements.splice(ii,1);
+function delProductLog(id,lid){
+  showConfirm("删除这条产品记录?", ()=>{
+    const m=getMember(id);
+    m.productLogs=m.productLogs.filter(l=>l.id!==lid);
     saveData(); renderDetail();
   });
 }
