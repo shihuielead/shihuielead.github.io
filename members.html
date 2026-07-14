@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成员档案</title>
+<style>
+  :root{
+    --bg:#EFF3EE;
+    --card:#FFFFFF;
+    --ink:#1E2B24;
+    --muted:#75857B;
+    --line:#DDE5DE;
+    --pine:#2E6B4F;
+    --pine-soft:#E3EFE8;
+    --rose:#C4577A;
+    --rose-soft:#F8E9EF;
+    --gold:#B58A3A;
+    --gold-soft:#F5EDDD;
+    --warn:#A85A3C;
+    --warn-soft:#F4E6DE;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:20px 16px}
+
+  /* ===== header ===== */
+  .app-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .app-title{font-size:24px;font-weight:700;letter-spacing:1px}
+  .app-title .dot{color:var(--pine)}
+  .app-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .head-actions{display:flex;gap:8px}
+
+  /* ===== buttons ===== */
+  .btn{
+    border:none;border-radius:10px;padding:10px 16px;font-size:14px;
+    cursor:pointer;font-family:inherit;font-weight:500;
+  }
+  .btn-primary{background:var(--pine);color:#fff}
+  .btn-primary:active{background:#245740}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .btn-small{padding:6px 12px;font-size:13px;border-radius:8px}
+  .btn-rose{background:var(--rose);color:#fff}
+  .btn-danger{background:transparent;color:#B04040;border:1px solid #E5CACA}
+
+  /* ===== toolbar ===== */
+  .toolbar{display:flex;gap:8px;margin-bottom:14px}
+  .search{
+    flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:14px;font-family:inherit;background:var(--card);color:var(--ink);
+  }
+  .search:focus{outline:2px solid var(--pine-soft);border-color:var(--pine)}
+
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .chip{
+    border:1px solid var(--line);background:var(--card);border-radius:99px;
+    padding:5px 12px;font-size:12px;cursor:pointer;color:var(--muted);font-family:inherit;
+  }
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* ===== member cards ===== */
+  .member-card{
+    background:var(--card);border-radius:var(--radius);padding:16px;
+    margin-bottom:10px;cursor:pointer;border:1px solid var(--line);
+    transition:transform .08s ease;
+  }
+  .member-card:active{transform:scale(.985)}
+  .mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+  .mc-name{font-size:17px;font-weight:600}
+  .status-badge{font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .st-新顾客{background:var(--pine-soft);color:var(--pine)}
+  .st-稳定使用{background:var(--pine);color:#fff}
+  .st-不再复购{background:var(--warn-soft);color:var(--warn)}
+  .st-有见证{background:var(--rose-soft);color:var(--rose)}
+  .st-事业了解{background:var(--gold-soft);color:var(--gold)}
+  .st-伙伴{background:var(--gold);color:#fff}
+  .mc-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+  .mc-meta .due{color:var(--rose);font-weight:500}
+
+  /* mini path on card */
+  .mini-path{display:flex;gap:4px;margin-top:10px}
+  .mini-path i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+  .mini-path i.on{background:var(--pine)}
+  .mini-path i.last.on{background:var(--gold)}
+
+  .empty{
+    text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;line-height:1.8;
+  }
+  .empty strong{color:var(--ink)}
+
+  /* ===== detail ===== */
+  .back{
+    background:none;border:none;color:var(--pine);font-size:14px;cursor:pointer;
+    padding:0;margin-bottom:14px;font-family:inherit;font-weight:500;
+  }
+  .profile-head{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--line);margin-bottom:12px}
+  .ph-row{display:flex;justify-content:space-between;align-items:flex-start}
+  .ph-name{font-size:22px;font-weight:700}
+  .ph-info{margin-top:10px;font-size:13px;color:var(--muted);line-height:2}
+  .ph-info b{color:var(--ink);font-weight:500}
+  .status-select{
+    border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:13px;
+    font-family:inherit;background:#fff;color:var(--ink);margin-left:4px;
+  }
+
+  /* signature: growth path stepper */
+  .path{margin:18px 0 4px}
+  .path-title{font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:10px}
+  .steps{display:flex;align-items:flex-start}
+  .step{flex:1;text-align:center;position:relative;cursor:pointer}
+  .step .node{
+    width:14px;height:14px;border-radius:50%;background:var(--card);
+    border:2px solid var(--line);margin:0 auto 6px;position:relative;z-index:2;
+  }
+  .step.done .node{background:var(--pine);border-color:var(--pine)}
+  .step.current .node{background:var(--card);border-color:var(--pine);box-shadow:0 0 0 4px var(--pine-soft)}
+  .step:last-child.done .node{background:var(--gold);border-color:var(--gold)}
+  .step:last-child.current .node{border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+  .step::before{
+    content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line);z-index:1;
+  }
+  .step:first-child::before{display:none}
+  .step.done::before,.step.current::before{background:var(--pine)}
+  .step .lbl{font-size:11px;color:var(--muted);line-height:1.3}
+  .step.current .lbl{color:var(--pine);font-weight:600}
+  .step:last-child.current .lbl{color:var(--gold)}
+
+  .section{background:var(--card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--line);margin-bottom:12px}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  .sec-title{font-size:14px;font-weight:600}
+
+  /* products */
+  .prod-block{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .prod-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 12px;background:var(--pine-soft);font-size:14px;font-weight:500;
+  }
+  .prod-head .d{font-size:12px;color:var(--muted);font-weight:400}
+  .prod-head .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 0 0 10px}
+  .improve-list{padding:4px 12px}
+  .improve-item{
+    display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);
+    font-size:13px;line-height:1.6;align-items:baseline;
+  }
+  .improve-item:last-child{border-bottom:none}
+  .improve-item .idate{color:var(--pine);font-weight:500;white-space:nowrap;font-size:12px}
+  .improve-item .idel{background:none;border:none;color:var(--line);cursor:pointer;font-size:12px;margin-left:auto;font-family:inherit;flex-shrink:0}
+  .improve-item .idel:hover{color:#B04040}
+  .improve-add{display:flex;gap:6px;padding:8px 12px 12px;flex-wrap:wrap}
+  .improve-add input[type=date]{
+    border:1px solid var(--line);border-radius:8px;padding:7px;font-size:12px;font-family:inherit;background:#fff;color:var(--ink)
+  }
+  .improve-add input[type=text]{
+    flex:1;min-width:140px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+    font-size:13px;font-family:inherit;background:#fff;color:var(--ink)
+  }
+  .improve-add input:focus{outline:2px solid var(--pine-soft);border-color:var(--pine)}
+  .prod-add{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .prod-add select,.prod-add input{
+    border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--ink)
+  }
+  .prod-add select{flex:1;min-width:110px}
+
+  /* checklist */
+  .check-item{
+    display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px;
+    border-bottom:1px dashed var(--line);cursor:pointer;
+  }
+  .check-item:last-child{border-bottom:none}
+  .check-item .box{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    font-size:13px;color:#fff;
+  }
+  .check-item.on .box{background:var(--pine);border-color:var(--pine)}
+  .check-item.on .txt{color:var(--muted);text-decoration:line-through}
+  .check-item .sub{font-size:12px;color:var(--muted);margin-left:4px}
+  .check-note{font-size:11px;color:var(--muted);margin-top:8px}
+
+  /* 分享过: 三级进度 */
+  .learn-item{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;
+  }
+  .learn-item:last-child{border-bottom:none}
+  .learn-name{font-size:14px}
+  .learn-name .sub{font-size:12px;color:var(--muted);margin-left:4px}
+  .levels{display:flex;gap:4px}
+  .lv{
+    border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:99px;
+    padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit;
+  }
+  .lv.on{background:var(--pine);border-color:var(--pine);color:#fff}
+  .lv.on.top{background:var(--gold);border-color:var(--gold)}
+
+  /* 跟进日期备注 */
+  .fu-note{
+    flex:1;min-width:150px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+    font-size:13px;font-family:inherit;background:#fff;color:var(--ink);
+  }
+  .fu-note:focus{outline:2px solid var(--pine-soft);border-color:var(--pine)}
+
+  /* 跟进表格 */
+  .plan-input{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:14px;font-family:inherit;resize:vertical;min-height:48px;
+    background:#fff;color:var(--ink);margin-top:8px;line-height:1.6;
+  }
+  .plan-input:focus{outline:2px solid var(--gold-soft);border-color:var(--gold)}
+  .cur-plan{
+    background:var(--gold-soft);border-radius:10px;padding:10px 12px;
+    font-size:13px;margin-bottom:12px;line-height:1.6;
+  }
+  .cur-plan b{color:var(--gold);font-weight:600}
+  .log-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .log-table th{
+    text-align:left;font-size:11px;color:var(--muted);font-weight:500;
+    padding:6px 6px;border-bottom:1px solid var(--line);letter-spacing:1px;
+  }
+  .log-table td{
+    padding:10px 6px;border-bottom:1px dashed var(--line);
+    vertical-align:top;line-height:1.6;word-break:break-word;white-space:pre-wrap;
+  }
+  .log-table tr:last-child td{border-bottom:none}
+  .td-date{width:70px;color:var(--muted);font-size:12px}
+  .td-plan{color:var(--pine)}
+  .td-x{width:26px;text-align:right}
+  .td-x button{background:none;border:none;color:var(--line);cursor:pointer;font-size:14px}
+  .td-x button:hover{color:#B04040}
+
+  /* follow-up log */
+  .sec-head input[type=date]{
+    border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;
+    font-family:inherit;background:#fff;color:var(--ink);
+  }
+  .log-form{margin-bottom:14px}
+  .log-form textarea{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:14px;font-family:inherit;resize:vertical;min-height:64px;background:#fff;color:var(--ink)
+  }
+  .log-form textarea:focus{outline:2px solid var(--pine-soft);border-color:var(--pine)}
+  .log-form-row{display:flex;gap:8px;margin-top:8px;align-items:center}
+  .toggle-testi{
+    display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;
+  }
+  .toggle-testi .tbox{width:16px;height:16px;border-radius:5px;border:2px solid var(--line);flex-shrink:0}
+  .toggle-testi.on{color:var(--rose)}
+  .toggle-testi.on .tbox{background:var(--rose);border-color:var(--rose)}
+
+  .log-item{padding:12px 0;border-bottom:1px dashed var(--line)}
+  .log-item:last-child{border-bottom:none}
+  .log-date{font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .testi-tag{background:var(--rose-soft);color:var(--rose);font-size:11px;padding:1px 8px;border-radius:99px}
+  .log-text{font-size:14px;line-height:1.7;white-space:pre-wrap}
+  .log-del{background:none;border:none;color:var(--line);cursor:pointer;font-size:12px;margin-left:auto;font-family:inherit}
+  .log-del:hover{color:#B04040}
+
+  .followup-row{display:flex;align-items:center;gap:10px;font-size:14px}
+  .followup-row input[type=date]{border:1px solid var(--line);border-radius:8px;padding:7px;font-size:13px;font-family:inherit;background:#fff;color:var(--ink)}
+
+  /* ===== modal form ===== */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(30,43,36,.45);display:flex;
+    align-items:flex-end;justify-content:center;z-index:50;
+  }
+  @media(min-width:520px){.modal-bg{align-items:center}}
+  .modal{
+    background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:520px;
+    max-height:88vh;overflow-y:auto;padding:22px 20px 30px;
+  }
+  @media(min-width:520px){.modal{border-radius:18px}}
+  .modal h3{font-size:17px;margin-bottom:16px}
+  .f-group{margin-bottom:14px}
+  .f-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .f-group input,.f-group select{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--ink)
+  }
+  .f-group input:focus,.f-group select:focus{outline:2px solid var(--pine-soft);border-color:var(--pine)}
+  .modal-actions{display:flex;gap:10px;margin-top:20px}
+  .modal-actions .btn{flex:1}
+
+  .danger-zone{margin-top:8px;text-align:center}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;
+    font-size:13px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .toast.show{opacity:1}
+
+  .loading{text-align:center;padding:80px 0;color:var(--muted);font-size:14px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading">档案载入中…</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+/* ⬇⬇⬇ 把 Firebase 给你的 firebaseConfig 整段贴在这里,替换下面这一段 ⬇⬇⬇ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBgJFc6CONMzumzR6FsrOjpvKRxAR0y0wk",
+  authDomain: "members-database-3cdd2.firebaseapp.com",
+  databaseURL: "https://members-database-3cdd2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "members-database-3cdd2",
+  storageBucket: "members-database-3cdd2.firebasestorage.app",
+  messagingSenderId: "348806876970",
+  appId: "1:348806876970:web:18878415f771f83264d853"
+};
+/* ⬆⬆⬆ 替换到这里为止,其他地方都不用动 ⬆⬆⬆ */
+firebase.initializeApp(firebaseConfig);
+</script>
+
+<script>
+/* ================= 设定 ================= */
+const PATH_STAGES = ["消费者","爱用者","分享者","经营者","领导者"];
+const STATUSES = ["新顾客","稳定使用","不再复购","有见证","事业了解","伙伴"];
+const PRODUCTS = [
+  "Rhapsody",
+  "Rosytime",
+  "Emunity",
+  "Soygreen",
+  "Soygreen Caramel",
+  "Raisintree",
+  "Berrybeat",
+  "Soypro Original",
+  "Soypro Hazelnut",
+  "Phytofit",
+  "Chamoment",
+  "Fibertalk",
+  "Goji Rose",
+  "Goji Yuzu",
+  "Goji Osmanthus",
+  "Goji Coffee",
+  "Goji Decaffe",
+  "Full Nourishment Series"
+];
+const LEARN_ITEMS = [
+  {key:"营养免疫学", sub:""},
+  {key:"我为什么吃", sub:"产品见证"},
+  {key:"我为什么做", sub:"事业见证"},
+  {key:"五大要件", sub:""},
+  {key:"风险观念", sub:""}
+];
+const KEY = "member-db";
+
+let db = { members: [] };
+let view = { page:"list", memberId:null, filter:"全部", search:"", testiMode:false };
+
+/* ================= 存储 (Firebase) ================= */
+let dbRef = null;
+
+function initAuth(){
+  firebase.auth().onAuthStateChanged(async user=>{
+    if(user){
+      dbRef = firebase.database().ref("users/"+user.uid+"/memberDb");
+      await loadData();
+    }else{
+      renderLogin();
+    }
+  });
+}
+function renderLogin(){
+  $("#app").innerHTML = `
+    <div class="app-head"><div class="app-title">成员档案<span class="dot">.</span></div></div>
+    <div class="section" style="margin-top:40px;max-width:400px;margin-left:auto;margin-right:auto">
+      <div class="sec-title" style="margin-bottom:16px">登录</div>
+      <div class="f-group"><label>Email</label><input id="lgEmail" type="email" autocomplete="username"></div>
+      <div class="f-group"><label>密码</label><input id="lgPass" type="password" autocomplete="current-password"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">登录</button>
+      <div class="check-note" style="margin-top:12px">每台设备只需登录一次,之后会保持登录状态</div>
+    </div>`;
+}
+async function doLogin(){
+  const email=$("#lgEmail").value.trim(), pass=$("#lgPass").value;
+  if(!email||!pass){ showToast("Email和密码都要填"); return; }
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+  }catch(e){
+    showToast("登录失败,检查Email和密码是否正确");
+  }
+}
+function doLogout(){
+  showConfirm("退出登录?数据已在云端,下次登录还在。", ()=>firebase.auth().signOut(), "退出");
+}
+async function loadData(){
+  try{
+    const snap = await dbRef.get();
+    if(snap.exists()){
+      const v = snap.val();
+      db = typeof v === "string" ? JSON.parse(v) : v;
+    }
+  }catch(e){ showToast("载入失败,请检查网络后刷新页面"); }
+  migrate();
+  render();
+}
+function migrate(){
+  // 兼容旧版数据结构
+  db.members.forEach(m=>{
+    if(m.status===undefined) m.status = m.type==="伙伴" ? "伙伴" : "新顾客";
+    if(m.stage===undefined || m.stage>4) m.stage = Math.min(m.stage||0,4);
+    if(!Array.isArray(m.products)) m.products=[];
+    const RENAME = {"协奏曲":"Rhapsody","恋玫":"Rosytime","Emunity蕈菇":"Emunity","巧绿":"Soygreen","藤蜜":"Raisintree","Fibertalk纤语":"Fibertalk","Rhapsody 协奏曲":"Rhapsody","Rosytime 恋玫":"Rosytime","Emunity 蕈菇":"Emunity","Soygreen 巧绿":"Soygreen","Raisintree 藤蜜":"Raisintree","Fibertalk 纤语":"Fibertalk","Full Nourishment Series 全面营养系列":"Full Nourishment Series"};
+    m.products.forEach(p=>{
+      if(RENAME[p.name]) p.name=RENAME[p.name];
+      if(!Array.isArray(p.improvements)) p.improvements=[];
+    });
+    if(!m.learning) m.learning={};
+    Object.keys(m.learning).forEach(k=>{
+      if(m.learning[k]===true) m.learning[k]=1;
+      if(m.learning[k]===false) m.learning[k]=0;
+    });
+    if(m.followUpNote===undefined) m.followUpNote="";
+    if(!Array.isArray(m.logs)) m.logs=[];
+    m.logs.forEach(l=>{ if(l.plan===undefined) l.plan=""; });
+    if(m.nextPlan){
+      const sorted=m.logs.slice().sort((a,b)=>b.date.localeCompare(a.date));
+      if(sorted[0] && !sorted[0].plan){ sorted[0].plan=m.nextPlan; }
+      else if(!sorted[0]){ m.logs.push({id:uid(),date:today(),text:"—",plan:m.nextPlan,testi:false}); }
+      m.nextPlan="";
+    }
+  });
+}
+let saveTimer = null;
+function saveData(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      await dbRef.set(JSON.stringify(db));
+    }catch(e){
+      showToast("⚠️ 保存失败,请检查网络后再操作一次");
+    }
+  }, 300);
+}
+
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => d ? d.replace(/-/g,"/") : "";
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function showToast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function showConfirm(msg, onYes, yesLabel){
+  const bg=document.createElement("div");
+  bg.className="modal-bg";
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  bg.innerHTML=`<div class="modal" style="max-width:360px">
+    <h3 style="font-size:15px;line-height:1.6">${msg}</h3>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cfNo">取消</button>
+      <button class="btn" id="cfYes" style="background:#B04040;color:#fff">${yesLabel||"确定删除"}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.querySelector("#cfNo").onclick=()=>bg.remove();
+  bg.querySelector("#cfYes").onclick=()=>{ bg.remove(); onYes(); };
+}
+function getMember(id){ return db.members.find(m=>m.id===id); }
+function isOverdue(d){ return d && d <= today(); }
+
+/* ================= 渲染 ================= */
+function render(){
+  if(view.page==="list") renderList();
+  else renderDetail();
+  window.scrollTo(0,0);
+}
+
+function renderList(){
+  const app = $("#app");
+  let list = db.members.slice();
+  if(view.filter!=="全部") list = list.filter(m=>m.status===view.filter);
+  if(view.search) list = list.filter(m=>m.name.includes(view.search));
+  list.sort((a,b)=>{
+    const ao=isOverdue(a.nextFollowUp)?0:1, bo=isOverdue(b.nextFollowUp)?0:1;
+    if(ao!==bo) return ao-bo;
+    return (b.joinDate||"").localeCompare(a.joinDate||"");
+  });
+
+  const chips = ["全部",...STATUSES].map(s=>
+    `<button class="chip ${view.filter===s?'active':''}" onclick="setFilter('${s}')">${s}</button>`
+  ).join("");
+
+  const cards = list.map(m=>{
+    const pathBars = PATH_STAGES.map((_,i)=>
+      `<i class="${i<=m.stage?'on':''} ${i===PATH_STAGES.length-1?'last':''}"></i>`).join("");
+    const due = isOverdue(m.nextFollowUp)
+      ? `<span class="due">● 该跟进了 (${fmtDate(m.nextFollowUp)})</span>`
+      : (m.nextFollowUp?`<span>下次跟进 ${fmtDate(m.nextFollowUp)}</span>`:"");
+    const prods = m.products.length?`<span>${m.products.map(p=>p.name).join("、")}</span>`:"";
+    return `<div class="member-card" onclick="openMember('${m.id}')">
+      <div class="mc-top">
+        <div class="mc-name">${esc(m.name)}</div>
+        <div class="status-badge st-${m.status}">${m.status}</div>
+      </div>
+      <div class="mc-meta">${due}${prods}</div>
+      <div class="mini-path">${pathBars}</div>
+    </div>`;
+  }).join("");
+
+  app.innerHTML = `
+    <div class="app-head">
+      <div class="app-title">成员档案<span class="dot">.</span></div>
+      <div class="head-actions">
+        <button class="btn btn-ghost btn-small" onclick="importData()">导入</button>
+        <button class="btn btn-ghost btn-small" onclick="exportData()">备份</button>
+        <button class="btn btn-primary btn-small" onclick="openForm()">＋ 新成员</button>
+      </div>
+    </div>
+    <div class="app-sub">共 ${db.members.length} 位 · 云端同步中 · <a href="#" onclick="doLogout();return false" style="color:var(--muted)">退出登录</a></div>
+    <div class="toolbar">
+      <input class="search" placeholder="搜索名字…" value="${esc(view.search)}" oninput="setSearch(this.value)">
+    </div>
+    <div class="filter-row">${chips}</div>
+    ${cards || `<div class="empty">${view.search||view.filter!=="全部"
+      ? "没有符合条件的成员"
+      : "还没有成员档案<br><strong>点右上角「＋ 新成员」</strong>建立第一份"}</div>`}
+  `;
+}
+
+function renderDetail(){
+  const m = getMember(view.memberId);
+  if(!m){ view.page="list"; return renderList(); }
+  const app = $("#app");
+
+  // 成长路径 (五阶段)
+  const steps = PATH_STAGES.map((s,i)=>{
+    const cls = i<m.stage?"done":(i===m.stage?"current":"");
+    return `<div class="step ${cls}" onclick="setStage('${m.id}',${i})">
+      <div class="node"></div><div class="lbl">${s}</div>
+    </div>`;
+  }).join("");
+
+  // 状态下拉
+  const statusOpts = STATUSES.map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join("");
+
+  // 产品 + 每个产品的改善记录
+  const prodBlocks = m.products.map((p,pi)=>{
+    const improves = p.improvements.map((im,ii)=>
+      `<div class="improve-item">
+        <span class="idate">${fmtDate(im.date)}</span>
+        <span>${esc(im.text)}</span>
+        <button class="idel" onclick="delImprove('${m.id}',${pi},${ii})">删除</button>
+      </div>`).join("");
+    return `<div class="prod-block">
+      <div class="prod-head">
+        <span>${esc(p.name)}</span>
+        <span class="d">开始:${fmtDate(p.date)}<button class="rm" onclick="removeProduct('${m.id}',${pi})" title="移除产品">×</button></span>
+      </div>
+      ${improves?`<div class="improve-list">${improves}</div>`:""}
+      <div class="improve-add">
+        <input type="date" id="impDate${pi}" value="${today()}">
+        <input type="text" id="impText${pi}" placeholder="有什么改善?如:排便顺了、睡眠变好">
+        <button class="btn btn-primary btn-small" onclick="addImprove('${m.id}',${pi})">＋</button>
+      </div>
+    </div>`;
+  }).join("") || `<div class="check-note">还没记录,在下面选产品和开始日期</div>`;
+  const prodOptions = PRODUCTS.map(p=>`<option>${p}</option>`).join("");
+
+  // 分享过: 每项三级进度
+  const LEVELS = ["知道","理解","应用"];
+  const checks = LEARN_ITEMS.map(item=>{
+    const lv = m.learning[item.key]||0;
+    const pills = LEVELS.map((L,i)=>
+      `<button class="lv ${lv>=i+1?'on':''} ${i===2?'top':''}" onclick="setLearnLevel('${m.id}','${item.key}',${i+1})">${L}</button>`
+    ).join("");
+    return `<div class="learn-item">
+      <div class="learn-name">${item.key}${item.sub?`<span class="sub">(${item.sub})</span>`:''}</div>
+      <div class="levels">${pills}</div>
+    </div>`;
+  }).join("");
+
+  // 跟进记录表格(新的在上)
+  const sorted = m.logs.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const rows = sorted.map(l=>
+    `<tr>
+      <td class="td-date">${fmtDate(l.date)}${l.testi?'<br><span class="testi-tag">见证</span>':''}</td>
+      <td>${esc(l.text)}</td>
+      <td class="td-plan">${esc(l.plan||"")}</td>
+      <td class="td-x"><button onclick="delLog('${m.id}','${l.id}')" title="删除">×</button></td>
+    </tr>`).join("");
+  const logTable = rows
+    ? `<table class="log-table">
+        <thead><tr><th>日期</th><th>跟进记录</th><th>下一步计划</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`
+    : `<div class="check-note">还没有跟进记录</div>`;
+  const curPlan = (sorted[0] && sorted[0].plan) ? sorted[0].plan : "";
+
+  const testiCount = m.logs.filter(l=>l.testi).length;
+
+  app.innerHTML = `
+    <button class="back" onclick="goList()">‹ 返回列表</button>
+
+    <div class="profile-head">
+      <div class="ph-row">
+        <div class="ph-name">${esc(m.name)}</div>
+        <button class="btn btn-ghost btn-small" onclick="openForm('${m.id}')">编辑</button>
+      </div>
+      <div class="ph-info">
+        状态:<select class="status-select" onchange="setStatus('${m.id}',this.value)">${statusOpts}</select><br>
+        联系:<b>${esc(m.phone)||"—"}</b> · 来源:<b>${esc(m.source)||"—"}</b><br>
+        加入日期:<b>${fmtDate(m.joinDate)||"—"}</b>${testiCount?` · 见证 <b style="color:var(--rose)">${testiCount}</b> 条`:""}
+      </div>
+      <div class="path">
+        <div class="path-title">成 长 路 径(点圆点更改阶段)</div>
+        <div class="steps">${steps}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">最近日期</div>
+        ${isOverdue(m.nextFollowUp)?'<span style="color:var(--rose);font-size:13px">● 到期了</span>':''}
+      </div>
+      <div class="followup-row">
+        <input type="date" value="${m.nextFollowUp||''}" onchange="setFollowUp('${m.id}',this.value)">
+        <input type="text" class="fu-note" placeholder="备注:约了做什么、要带什么…" value="${esc(m.followUpNote)}" onchange="setFollowNote('${m.id}',this.value)">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">目前吃的产品</div></div>
+      ${prodBlocks}
+      <div class="prod-add">
+        <select id="prodSel">${prodOptions}</select>
+        <input type="date" id="prodDate" value="${today()}">
+        <button class="btn btn-primary btn-small" onclick="addProduct('${m.id}')">加入</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><div class="sec-title">分享过</div></div>
+      ${checks}
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <div class="sec-title">跟进记录</div>
+        <input type="date" id="logDate" value="${today()}">
+      </div>
+      ${curPlan?`<div class="cur-plan"><b>当前计划</b> · ${esc(curPlan)}</div>`:""}
+      <div class="log-form">
+        <textarea id="logText" placeholder="这次跟进:她说了什么、身体有什么变化…"></textarea>
+        <textarea id="planText" class="plan-input" placeholder="下一步计划:接下来要带她做什么…"></textarea>
+        <div class="log-form-row">
+          <div class="toggle-testi ${view.testiMode?'on':''}" onclick="toggleTestiMode()">
+            <div class="tbox"></div>这是一条见证
+          </div>
+          <button class="btn btn-rose btn-small" style="margin-left:auto" onclick="addLog('${m.id}')">记录</button>
+        </div>
+      </div>
+      ${logTable}
+    </div>
+
+    <div class="danger-zone">
+      <button class="btn btn-danger btn-small" onclick="delMember('${m.id}')">删除这位成员的档案</button>
+    </div>
+  `;
+}
+
+/* ================= 操作 ================= */
+function setFilter(f){ view.filter=f; renderList(); }
+function setSearch(s){ view.search=s; renderList(); const inp=$(".search"); inp.focus(); inp.setSelectionRange(s.length,s.length); }
+function openMember(id){ view.page="detail"; view.memberId=id; view.testiMode=false; render(); }
+function goList(){ view.page="list"; render(); }
+
+function setStage(id,i){ getMember(id).stage=i; saveData(); renderDetail(); }
+function setStatus(id,s){ getMember(id).status=s; saveData(); renderDetail(); }
+function setFollowUp(id,v){ getMember(id).nextFollowUp=v; saveData(); renderDetail(); }
+function setLearnLevel(id,key,lv){
+  const m=getMember(id);
+  m.learning[key] = (m.learning[key]===lv) ? lv-1 : lv; // 点当前等级可退一级
+  saveData(); renderDetail();
+}
+function setFollowNote(id,v){ getMember(id).followUpNote=v.trim(); saveData(); }
+function addProduct(id){
+  const name=$("#prodSel").value, date=$("#prodDate").value;
+  const m=getMember(id);
+  if(m.products.some(p=>p.name===name)){ showToast(name+" 已在清单里"); return; }
+  m.products.push({name,date,improvements:[]}); saveData(); renderDetail();
+}
+function removeProduct(id,i){
+  event.stopPropagation();
+  const m=getMember(id);
+  const doRemove=()=>{ m.products.splice(i,1); saveData(); renderDetail(); };
+  if(m.products[i].improvements.length){
+    showConfirm(`移除「${esc(m.products[i].name)}」会连同它的改善记录一起删除,确定?`, doRemove);
+  }else{
+    doRemove();
+  }
+}
+function addImprove(id,pi){
+  const date=$("#impDate"+pi).value, text=$("#impText"+pi).value.trim();
+  if(!text){ showToast("先写改善内容"); return; }
+  getMember(id).products[pi].improvements.push({date,text});
+  saveData(); renderDetail(); showToast("已记录改善");
+}
+function delImprove(id,pi,ii){
+  showConfirm("删除这条改善记录?", ()=>{
+    getMember(id).products[pi].improvements.splice(ii,1);
+    saveData(); renderDetail();
+  });
+}
+function toggleTestiMode(){ view.testiMode=!view.testiMode;
+  const el=document.querySelector(".toggle-testi"); el.classList.toggle("on");
+}
+function addLog(id){
+  const text=$("#logText").value.trim();
+  const plan=$("#planText").value.trim();
+  if(!text && !plan){ showToast("先写点内容"); return; }
+  const m=getMember(id);
+  m.logs.push({id:uid(),date:$("#logDate").value||today(),text:text||"—",plan,testi:view.testiMode});
+  view.testiMode=false;
+  saveData(); renderDetail(); showToast("已记录");
+}
+function delLog(mid,lid){
+  showConfirm("删除这条记录?", ()=>{
+    const m=getMember(mid);
+    m.logs=m.logs.filter(l=>l.id!==lid);
+    saveData(); renderDetail();
+  });
+}
+function delMember(id){
+  const m=getMember(id);
+  showConfirm(`确定删除「${esc(m.name)}」的整份档案?此操作无法恢复。`, ()=>{
+    db.members=db.members.filter(x=>x.id!==id);
+    saveData(); goList(); showToast("已删除");
+  });
+}
+
+/* ================= 新增/编辑表单 ================= */
+function openForm(editId){
+  const m = editId ? getMember(editId) : null;
+  const statusOpts = STATUSES.map(s=>
+    `<option ${(m?m.status:"新顾客")===s?'selected':''}>${s}</option>`).join("");
+  const bg=document.createElement("div");
+  bg.className="modal-bg"; bg.id="modalBg";
+  bg.onclick=e=>{ if(e.target===bg) closeForm(); };
+  bg.innerHTML=`<div class="modal">
+    <h3>${m?"编辑资料":"新成员档案"}</h3>
+    <div class="f-group"><label>姓名 *</label><input id="fName" value="${m?esc(m.name):''}" placeholder="她叫什么"></div>
+    <div class="f-group"><label>状态</label><select id="fStatus">${statusOpts}</select></div>
+    <div class="f-group"><label>联系方式</label><input id="fPhone" value="${m?esc(m.phone):''}" placeholder="WhatsApp / 电话"></div>
+    <div class="f-group"><label>来源</label><input id="fSource" value="${m?esc(m.source):''}" placeholder="谁介绍 / FB / 线下活动…"></div>
+    <div class="f-group"><label>加入日期</label><input type="date" id="fJoin" value="${m?m.joinDate:today()}"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeForm()">取消</button>
+      <button class="btn btn-primary" onclick="submitForm('${editId||''}')">${m?"保存":"建立档案"}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  if(!m) setTimeout(()=>$("#fName").focus(),50);
+}
+function closeForm(){ const b=$("#modalBg"); if(b) b.remove(); }
+function submitForm(editId){
+  const name=$("#fName").value.trim();
+  if(!name){ showToast("名字不能空"); return; }
+  if(editId){
+    const m=getMember(editId);
+    Object.assign(m,{name,status:$("#fStatus").value,phone:$("#fPhone").value.trim(),source:$("#fSource").value.trim(),joinDate:$("#fJoin").value});
+  }else{
+    db.members.push({
+      id:uid(), name, status:$("#fStatus").value,
+      phone:$("#fPhone").value.trim(), source:$("#fSource").value.trim(),
+      joinDate:$("#fJoin").value, stage:0,
+      products:[], learning:{}, nextFollowUp:"", logs:[]
+    });
+  }
+  saveData(); closeForm();
+  if(editId) renderDetail(); else renderList();
+  showToast(editId?"已保存":"档案已建立");
+}
+
+/* ================= 备份导出/导入 ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`成员档案备份_${today()}.json`;
+  a.click();
+  showToast("备份文件已下载");
+}
+function importData(){
+  const inp=document.createElement("input");
+  inp.type="file"; inp.accept=".json,application/json";
+  inp.onchange=()=>{
+    const f=inp.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const parsed=JSON.parse(rd.result);
+        if(!parsed || !Array.isArray(parsed.members)) throw 0;
+        showConfirm(`导入会以备份内容覆盖现有 ${db.members.length} 位成员的资料,确定?`, ()=>{
+          db=parsed; migrate(); saveData(); render();
+          showToast("导入完成,共 "+db.members.length+" 位成员");
+        }, "确定导入");
+      }catch(e){ showToast("文件格式不对,请选之前下载的备份JSON"); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+
+initAuth();
+</script>
+</body>
+</html>
