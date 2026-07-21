@@ -587,16 +587,29 @@ function renderList(){
     </div>`;
   };
 
-  // TOP3: 下次见面日期最近的三位(只在无搜索无筛选时显示)
+  // TOP3: 永远凑满三人 —— 有下次见面日期的优先(近的在前),不足用最久没见面补足
   let cards="";
   if(view.filter==="全部" && !view.search){
+    const lastMeet = m => (Array.isArray(m.meetings)&&m.meetings.length) ? m.meetings.slice().sort().pop() : "";
     const withDate = list.filter(m=>m.nextFollowUp).sort((a,b)=>a.nextFollowUp.localeCompare(b.nextFollowUp));
-    const top3 = withDate.slice(0,3);
-    const top3Ids = new Set(top3.map(m=>m.id));
-    const rest = list.filter(m=>!top3Ids.has(m.id));
-    if(top3.length){
-      cards += `<div class="top3-head">📌 最近要见 TOP ${top3.length}</div>`;
-      cards += top3.map(cardHtml).join("");
+    const chosen = withDate.slice(0,3);
+    if(chosen.length<3){
+      const chosenIds = new Set(chosen.map(m=>m.id));
+      // 剩下的人按"最久没见面"排:从没见过的最优先,其次上次见面日期最早的
+      const fillers = list.filter(m=>!chosenIds.has(m.id)).sort((a,b)=>{
+        const la=lastMeet(a), lb=lastMeet(b);
+        if(!la && !lb) return 0;
+        if(!la) return -1;
+        if(!lb) return 1;
+        return la.localeCompare(lb);
+      });
+      for(const f of fillers){ if(chosen.length>=3) break; chosen.push(f); }
+    }
+    const topIds = new Set(chosen.map(m=>m.id));
+    const rest = list.filter(m=>!topIds.has(m.id));
+    if(chosen.length){
+      cards += `<div class="top3-head">📌 最近要见 TOP ${chosen.length}</div>`;
+      cards += chosen.map(cardHtml).join("");
       if(rest.length) cards += `<div class="list-head">全部成员</div>`;
     }
     cards += rest.map(cardHtml).join("");
