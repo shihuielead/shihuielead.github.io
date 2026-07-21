@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>成员档案</title>
+<title>VIP 成员档案</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <style>
   :root{
     --bg:#EFF3EE;
@@ -32,8 +34,9 @@
 
   /* ===== header ===== */
   .app-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
-  .app-title{font-size:24px;font-weight:700;letter-spacing:1px}
+  .app-title{font-size:24px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:9px}
   .app-title .dot{color:var(--pine)}
+  .app-logo{width:34px;height:34px;border-radius:9px;display:block}
   .app-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
   .head-actions{display:flex;gap:8px}
 
@@ -72,7 +75,21 @@
   }
   .member-card:active{transform:scale(.985)}
   .mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
-  .mc-name{font-size:17px;font-weight:600}
+  .mc-name{font-size:17px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .country-tag{
+    font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;letter-spacing:.5px;
+  }
+  .ct-MY{background:var(--pine-soft);color:var(--pine)}
+  .ct-SG{background:#E3ECF5;color:#3E6B9A}
+  .ct-OT{background:var(--gold-soft);color:var(--gold)}
+  .top3-head{
+    font-size:12px;font-weight:600;color:var(--rose);letter-spacing:1px;
+    margin:4px 0 8px;display:flex;align-items:center;gap:6px;
+  }
+  .list-head{
+    font-size:12px;font-weight:600;color:var(--muted);letter-spacing:1px;
+    margin:16px 0 8px;
+  }
   .status-badge{font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap}
   .st-新顾客{background:var(--pine-soft);color:var(--pine)}
   .st-稳定使用{background:var(--pine);color:#fff}
@@ -407,7 +424,7 @@ function initAuth(){
 }
 function renderLogin(){
   $("#app").innerHTML = `
-    <div class="app-head"><div class="app-title">成员档案<span class="dot">.</span></div></div>
+    <div class="app-head"><div class="app-title"><img class="app-logo" src="icon.png" alt="VIP">VIP<span class="dot">.</span></div></div>
     <div class="section" style="margin-top:40px;max-width:400px;margin-left:auto;margin-right:auto">
       <div class="sec-title" style="margin-bottom:16px">登录</div>
       <div class="f-group"><label>Email</label><input id="lgEmail" type="email" autocomplete="username"></div>
@@ -443,6 +460,7 @@ function migrate(){
   // 兼容旧版数据结构
   db.members.forEach(m=>{
     if(m.status===undefined) m.status = m.type==="伙伴" ? "伙伴" : "新顾客";
+    if(!m.country) m.country="MY";
     if(m.stage===undefined || m.stage>4) m.stage = Math.min(m.stage||0,4);
     if(!Array.isArray(m.products)) m.products=[];
     const RENAME = {"协奏曲":"Rhapsody","恋玫":"Rosytime","Emunity蕈菇":"Emunity","巧绿":"Soygreen","藤蜜":"Raisintree","Fibertalk纤语":"Fibertalk","Rhapsody 协奏曲":"Rhapsody","Rosytime 恋玫":"Rosytime","Emunity 蕈菇":"Emunity","Soygreen 巧绿":"Soygreen","Raisintree 藤蜜":"Raisintree","Fibertalk 纤语":"Fibertalk","Full Nourishment Series 全面营养系列":"Full Nourishment Series"};
@@ -540,13 +558,13 @@ function renderList(){
     `<button class="chip ${view.filter===s?'active':''}" onclick="setFilter('${s}')">${s}</button>`
   ).join("");
 
-  const cards = list.map(m=>{
+  const ctLabel = c => c==="OT" ? "其他" : c;
+  const cardHtml = m=>{
     const pathBars = PATH_STAGES.map((_,i)=>
       `<i class="${i<=m.stage?'on':''} ${i===PATH_STAGES.length-1?'last':''}"></i>`).join("");
     const due = isOverdue(m.nextFollowUp)
       ? `<span class="due">● 该跟进了 (${fmtDate(m.nextFollowUp)})</span>`
       : (m.nextFollowUp?`<span>下次见面 ${fmtDate(m.nextFollowUp)}</span>`:"");
-    // 距上次见面
     let meetInfo="";
     if(Array.isArray(m.meetings) && m.meetings.length){
       const last = m.meetings.slice().sort().pop();
@@ -561,17 +579,34 @@ function renderList(){
     const prods = pnames.length?`<span>${pnames.map(esc).join("、")}</span>`:"";
     return `<div class="member-card" onclick="openMember('${m.id}')">
       <div class="mc-top">
-        <div class="mc-name">${esc(m.name)}</div>
+        <div class="mc-name">${esc(m.name)}<span class="country-tag ct-${m.country}">${ctLabel(m.country)}</span></div>
         <div class="status-badge st-${m.status}">${m.status}</div>
       </div>
       <div class="mc-meta">${meetInfo}${due}${prods}</div>
       <div class="mini-path">${pathBars}</div>
     </div>`;
-  }).join("");
+  };
+
+  // TOP3: 下次见面日期最近的三位(只在无搜索无筛选时显示)
+  let cards="";
+  if(view.filter==="全部" && !view.search){
+    const withDate = list.filter(m=>m.nextFollowUp).sort((a,b)=>a.nextFollowUp.localeCompare(b.nextFollowUp));
+    const top3 = withDate.slice(0,3);
+    const top3Ids = new Set(top3.map(m=>m.id));
+    const rest = list.filter(m=>!top3Ids.has(m.id));
+    if(top3.length){
+      cards += `<div class="top3-head">📌 最近要见 TOP ${top3.length}</div>`;
+      cards += top3.map(cardHtml).join("");
+      if(rest.length) cards += `<div class="list-head">全部成员</div>`;
+    }
+    cards += rest.map(cardHtml).join("");
+  }else{
+    cards = list.map(cardHtml).join("");
+  }
 
   app.innerHTML = `
     <div class="app-head">
-      <div class="app-title">成员档案<span class="dot">.</span></div>
+      <div class="app-title"><img class="app-logo" src="icon.png" alt="VIP">VIP<span class="dot">.</span></div>
       <div class="head-actions">
         <button class="btn btn-ghost btn-small" onclick="importData()">导入</button>
         <button class="btn btn-ghost btn-small" onclick="exportData()">备份</button>
@@ -663,7 +698,7 @@ function renderDetail(){
 
     <div class="profile-head">
       <div class="ph-row">
-        <div class="ph-name">${esc(m.name)}</div>
+        <div class="ph-name">${esc(m.name)} <span class="country-tag ct-${m.country}" style="vertical-align:4px">${m.country==="OT"?"其他":m.country}</span></div>
         <button class="btn btn-ghost btn-small" onclick="openForm('${m.id}')">编辑</button>
       </div>
       <div class="ph-info">
@@ -819,6 +854,13 @@ function openForm(editId){
   bg.innerHTML=`<div class="modal">
     <h3>${m?"编辑资料":"新成员档案"}</h3>
     <div class="f-group"><label>姓名 *</label><input id="fName" value="${m?esc(m.name):''}" placeholder="她叫什么"></div>
+    <div class="f-group"><label>地区</label>
+      <select id="fCountry">
+        <option value="MY" ${(!m||m.country==="MY")?'selected':''}>MY 马来西亚</option>
+        <option value="SG" ${(m&&m.country==="SG")?'selected':''}>SG 新加坡</option>
+        <option value="OT" ${(m&&m.country==="OT")?'selected':''}>其他国家</option>
+      </select>
+    </div>
     <div class="f-group"><label>状态</label><select id="fStatus">${statusOpts}</select></div>
     <div class="f-group"><label>联系方式</label><input id="fPhone" value="${m?esc(m.phone):''}" placeholder="WhatsApp / 电话"></div>
     <div class="f-group"><label>来源</label><input id="fSource" value="${m?esc(m.source):''}" placeholder="谁介绍 / FB / 线下活动…"></div>
@@ -837,13 +879,13 @@ function submitForm(editId){
   if(!name){ showToast("名字不能空"); return; }
   if(editId){
     const m=getMember(editId);
-    Object.assign(m,{name,status:$("#fStatus").value,phone:$("#fPhone").value.trim(),source:$("#fSource").value.trim(),joinDate:$("#fJoin").value});
+    Object.assign(m,{name,status:$("#fStatus").value,country:$("#fCountry").value,phone:$("#fPhone").value.trim(),source:$("#fSource").value.trim(),joinDate:$("#fJoin").value});
   }else{
     db.members.push({
-      id:uid(), name, status:$("#fStatus").value,
+      id:uid(), name, status:$("#fStatus").value, country:$("#fCountry").value,
       phone:$("#fPhone").value.trim(), source:$("#fSource").value.trim(),
       joinDate:$("#fJoin").value, stage:0,
-      products:[], learning:{}, nextFollowUp:"", logs:[]
+      products:[], productLogs:[], learning:{}, meetings:[], nextFollowUp:"", followUpNote:"", logs:[]
     });
   }
   saveData(); closeForm();
